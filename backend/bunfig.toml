@@ -1,0 +1,11 @@
+[run]
+# Load environment variables from .env file
+env = ".env"
+
+[install]
+# Use exact versions
+exact = true
+
+[test]
+# Test runner settings
+coverage = true

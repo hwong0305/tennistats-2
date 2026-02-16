@@ -1,0 +1,9 @@
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Remove default text-align center that affects all children */
+#root > * {
+  text-align: left;
+}

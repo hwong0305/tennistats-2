@@ -1,0 +1,239 @@
+.dashboard {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.logoutButton {
+  padding: 0.5rem 1.25rem;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+}
+
+.logoutButton:hover {
+  background-color: var(--color-accent-red-bg);
+  border-color: var(--color-accent-red);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+  .statsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+.statCard {
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.statCardDefault {
+  background-color: var(--color-stats-bg-default);
+}
+
+.statCardDefault h3 {
+  color: var(--color-stats-text-default);
+}
+
+.statCardDefault .statValue {
+  color: var(--color-stats-text-default);
+}
+
+.statCardWin {
+  background-color: var(--color-stats-bg-win);
+}
+
+.statCardWin h3 {
+  color: var(--color-stats-text-win);
+}
+
+.statCardWin .statValue {
+  color: var(--color-stats-text-win);
+}
+
+.statCardLoss {
+  background-color: var(--color-stats-bg-loss);
+}
+
+.statCardLoss h3 {
+  color: var(--color-stats-text-loss);
+}
+
+.statCardLoss .statValue {
+  color: var(--color-stats-text-loss);
+}
+
+.statCardRate {
+  background-color: var(--color-stats-bg-rate);
+}
+
+.statCardRate h3 {
+  color: var(--color-stats-text-rate);
+}
+
+.statCardRate .statValue {
+  color: var(--color-stats-text-rate);
+}
+
+.statCard h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+.statValue {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
+
+@media (min-width: 640px) {
+  .statValue {
+    font-size: 3rem;
+  }
+}
+
+.utrSection {
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  background-color: var(--color-stats-bg-utr);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.utrSection h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-stats-text-utr);
+  opacity: 0.9;
+}
+
+.utrValue {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-stats-text-utr);
+}
+
+@media (min-width: 640px) {
+  .utrValue {
+    font-size: 3.5rem;
+  }
+}
+
+.navGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .navGrid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+.navCard {
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  background-color: var(--color-nav-bg);
+  border: 2px solid var(--color-border);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: block;
+}
+
+.navCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+}
+
+.navCardBlue {
+  border-color: var(--color-nav-border-blue);
+}
+
+.navCardBlue:hover {
+  background-color: var(--color-accent-blue-bg);
+}
+
+.navCardBlue h3 {
+  color: var(--color-accent-blue);
+}
+
+.navCardGreen {
+  border-color: var(--color-nav-border-green);
+}
+
+.navCardGreen:hover {
+  background-color: var(--color-accent-green-bg);
+}
+
+.navCardGreen h3 {
+  color: var(--color-accent-green);
+}
+
+.navCardRed {
+  border-color: var(--color-nav-border-red);
+}
+
+.navCardRed:hover {
+  background-color: var(--color-accent-red-bg);
+}
+
+.navCardRed h3 {
+  color: var(--color-accent-red);
+}
+
+.navCard h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.navCard p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}

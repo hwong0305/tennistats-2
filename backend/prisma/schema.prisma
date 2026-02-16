@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          Int                 @id @default(autoincrement())
+  email       String              @unique
+  password    String
+  firstName   String?             @map("first_name")
+  lastName    String?             @map("last_name")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  preferences UserPreferences?
+  journalEntries JournalEntry[]
+  matches     TennisMatch[]
+
+  @@map("users")
+}
+
+model UserPreferences {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique @map("user_id")
+  primaryHand   String?  @map("primary_hand")
+  playStyle     String?  @map("play_style")
+  backhandType  String?  @map("backhand_type")
+  utrRating     Float?   @map("utr_rating")
+  utrProfileUrl String?  @map("utr_profile_url")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model JournalEntry {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  title     String
+  content   String?
+  entryDate DateTime @map("entry_date") @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("journal_entries")
+}
+
+model TennisMatch {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @map("user_id")
+  opponentName      String   @map("opponent_name")
+  opponentUtr       Float?   @map("opponent_utr")
+  matchDate         DateTime @map("match_date") @db.Date
+  location          String?
+  surface           String?
+  userSetsWon       Int?     @map("user_sets_won")
+  opponentSetsWon   Int?     @map("opponent_sets_won")
+  matchScore        String?  @map("match_score")
+  result            String?
+  notes             String?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tennis_matches")
+}
