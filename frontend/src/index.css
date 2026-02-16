@@ -3,7 +3,7 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* Light mode colors (default) */
   --color-bg-primary: #ffffff;
@@ -62,8 +62,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+[data-theme='dark'] {
     --color-bg-primary: #0f0f0f;
     --color-bg-secondary: #1a1a1a;
     --color-bg-tertiary: #262626;
@@ -113,7 +112,10 @@
     --color-nav-border-blue: #60a5fa;
     --color-nav-border-green: #4ade80;
     --color-nav-border-red: #f87171;
-  }
+}
+
+[data-theme='dark'] body {
+  color-scheme: dark;
 }
 
 * {

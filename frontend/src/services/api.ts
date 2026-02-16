@@ -5,26 +5,18 @@ import type {
   TennisMatch, 
   LoginCredentials, 
   RegisterData,
-  ApiError 
+  ApiError,
+  PagedResponse
 } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 class ApiService {
-  private getToken(): string | null {
-    return localStorage.getItem('token');
-  }
-
   private getHeaders(): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
-    
-    const token = this.getToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
+
     return headers;
   }
 
@@ -32,6 +24,7 @@ class ApiService {
     const url = `${API_URL}${endpoint}`;
     const response = await fetch(url, {
       ...options,
+      credentials: 'include',
       headers: {
         ...this.getHeaders(),
         ...options.headers,
@@ -44,6 +37,18 @@ class ApiService {
     }
 
     return response.json() as Promise<T>;
+  }
+
+  private normalizePaged<T>(data: PagedResponse<T> | T[], page: number, pageSize: number): PagedResponse<T> {
+    if (Array.isArray(data)) {
+      return {
+        items: data,
+        total: data.length,
+        page,
+        pageSize,
+      };
+    }
+    return data;
   }
 
   // Auth
@@ -61,6 +66,16 @@ class ApiService {
     });
   }
 
+  getCurrentUser(): Promise<{ user: AuthResponse['user'] }> {
+    return this.request<{ user: AuthResponse['user'] }>('/auth/me');
+  }
+
+  logout(): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/logout', {
+      method: 'POST',
+    });
+  }
+
   // Preferences
   getPreferences(): Promise<UserPreferences | null> {
     return this.request<UserPreferences | null>('/preferences');
@@ -74,8 +89,16 @@ class ApiService {
   }
 
   // Journal
-  getJournalEntries(): Promise<JournalEntry[]> {
-    return this.request<JournalEntry[]>('/journal');
+  async getJournalEntries(params?: { page?: number; pageSize?: number; sort?: string }): Promise<PagedResponse<JournalEntry>> {
+    const search = new URLSearchParams();
+    const page = params?.page ?? 1;
+    const pageSize = params?.pageSize ?? 6;
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.pageSize) search.set('pageSize', String(params.pageSize));
+    if (params?.sort) search.set('sort', params.sort);
+    const query = search.toString();
+    const data = await this.request<PagedResponse<JournalEntry> | JournalEntry[]>(`/journal${query ? `?${query}` : ''}`);
+    return this.normalizePaged(data, page, pageSize);
   }
 
   createJournalEntry(entry: Omit<JournalEntry, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<{ message: string; id: number }> {
@@ -99,8 +122,16 @@ class ApiService {
   }
 
   // Matches
-  getMatches(): Promise<TennisMatch[]> {
-    return this.request<TennisMatch[]>('/matches');
+  async getMatches(params?: { page?: number; pageSize?: number; sort?: string }): Promise<PagedResponse<TennisMatch>> {
+    const search = new URLSearchParams();
+    const page = params?.page ?? 1;
+    const pageSize = params?.pageSize ?? 8;
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.pageSize) search.set('pageSize', String(params.pageSize));
+    if (params?.sort) search.set('sort', params.sort);
+    const query = search.toString();
+    const data = await this.request<PagedResponse<TennisMatch> | TennisMatch[]>(`/matches${query ? `?${query}` : ''}`);
+    return this.normalizePaged(data, page, pageSize);
   }
 
   createMatch(match: Omit<TennisMatch, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<{ message: string; id: number }> {

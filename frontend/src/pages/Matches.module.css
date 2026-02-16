@@ -24,6 +24,41 @@
   gap: 1rem;
 }
 
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.sortSelect {
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.paginationRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.paginationMeta {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.paginationControls {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
 .header h2 {
   margin: 0;
   font-size: 1.5rem;
@@ -291,6 +326,42 @@
   vertical-align: sub;
   line-height: 1;
   color: var(--color-text-muted);
+}
+
+.scoreTableWrapper {
+  margin: 0.5rem 0 0;
+}
+
+.scoreTitle {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.scoreTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.scoreTable thead th {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+}
+
+.scoreTable tbody td {
+  padding: 0.6rem 0.8rem;
+  border-top: 1px solid var(--color-border-subtle);
+  color: var(--color-text-primary);
 }
 
 .itemsList {

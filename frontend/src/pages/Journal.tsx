@@ -2,6 +2,7 @@ import React, { useState, useEffect, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import type { JournalEntry } from '../types';
+import { formatHumanDate, toDateInputValue } from '../utils/date';
 import styles from './Journal.module.css';
 
 interface JournalFormData {
@@ -10,10 +11,23 @@ interface JournalFormData {
   entryDate: string;
 }
 
+type JournalSort = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc';
+const JOURNAL_PAGE_SIZE = 6;
+
 const Journal: React.FC = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [totalEntries, setTotalEntries] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(JOURNAL_PAGE_SIZE);
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
+  const [sortBy, setSortBy] = useState<JournalSort>(() => {
+    const stored = localStorage.getItem('journalSort');
+    if (stored === 'date-desc' || stored === 'date-asc' || stored === 'title-asc' || stored === 'title-desc') {
+      return stored;
+    }
+    return 'date-desc';
+  });
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [formData, setFormData] = useState<JournalFormData>({
     title: '',
     content: '',
@@ -24,13 +38,23 @@ const Journal: React.FC = () => {
 
   useEffect(() => {
     loadEntries();
-  }, []);
+  }, [sortBy, currentPage]);
+
+  useEffect(() => {
+    localStorage.setItem('journalSort', sortBy);
+    setCurrentPage(1);
+  }, [sortBy]);
 
   const loadEntries = async (): Promise<void> => {
     setLoading(true);
     try {
-      const data = await api.getJournalEntries();
-      setEntries(data);
+      const data = await api.getJournalEntries({ page: currentPage, pageSize: JOURNAL_PAGE_SIZE, sort: sortBy });
+      setEntries(data.items);
+      setTotalEntries(data.total);
+      setPageSize(data.pageSize);
+      if (currentPage > 1 && data.items.length === 0) {
+        setCurrentPage(Math.max(1, Math.ceil(data.total / data.pageSize)));
+      }
     } catch (err: unknown) {
       console.error('Failed to load journal entries:', err);
     } finally {
@@ -51,6 +75,7 @@ const Journal: React.FC = () => {
       setShowForm(false);
       setEditingEntry(null);
       resetForm();
+      setCurrentPage(1);
       loadEntries();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to save entry';
@@ -73,7 +98,7 @@ const Journal: React.FC = () => {
     setFormData({
       title: entry.title,
       content: entry.content,
-      entryDate: entry.entryDate,
+      entryDate: toDateInputValue(entry.entryDate),
     });
     setShowForm(true);
   };
@@ -102,6 +127,9 @@ const Journal: React.FC = () => {
     return <div className="loading-container">Loading...</div>;
   }
 
+  const totalPages = Math.max(1, Math.ceil(totalEntries / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+
   return (
     <div className={styles.container}>
       <div className={styles.backButton}>
@@ -109,9 +137,44 @@ const Journal: React.FC = () => {
       </div>
       <div className={styles.header}>
         <h2>Journal Entries</h2>
-        <button onClick={toggleForm}>
-          {showForm ? 'Cancel' : 'Add Entry'}
-        </button>
+        <div className={styles.headerActions}>
+          <select
+            className={styles.sortSelect}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as JournalSort)}
+            aria-label="Sort journal entries"
+          >
+            <option value="date-desc">Newest first</option>
+            <option value="date-asc">Oldest first</option>
+            <option value="title-asc">Title A-Z</option>
+            <option value="title-desc">Title Z-A</option>
+          </select>
+          <button onClick={toggleForm}>
+            {showForm ? 'Cancel' : 'Add Entry'}
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.paginationRow}>
+        <span className={styles.paginationMeta}>
+          Page {safePage} of {totalPages}
+        </span>
+        <div className={styles.paginationControls}>
+          <button
+            type="button"
+            onClick={() => setCurrentPage(Math.max(1, safePage - 1))}
+            disabled={safePage === 1}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentPage(Math.min(totalPages, safePage + 1))}
+            disabled={safePage === totalPages}
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -159,7 +222,7 @@ const Journal: React.FC = () => {
             <div key={entry.id} className={styles.itemCard}>
               <div className={styles.itemHeader}>
                 <h3>{entry.title}</h3>
-                <span className={styles.itemMeta}>{entry.entryDate}</span>
+                <span className={styles.itemMeta}>{formatHumanDate(entry.entryDate)}</span>
               </div>
               <div className={styles.itemContent}>
                 <p className={styles.preWrap}>{entry.content}</p>

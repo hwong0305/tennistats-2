@@ -24,7 +24,7 @@ const Register: React.FC = () => {
 
     try {
       const response = await api.register(formData);
-      login(response.token, response.user);
+      login(response.user);
       navigate('/dashboard');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to register';

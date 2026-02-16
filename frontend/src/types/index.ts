@@ -53,10 +53,17 @@ export interface RegisterData extends LoginCredentials {
 }
 
 export interface AuthResponse {
-  token: string;
   user: User;
+  message?: string;
 }
 
 export interface ApiError {
   error: string;
+}
+
+export interface PagedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

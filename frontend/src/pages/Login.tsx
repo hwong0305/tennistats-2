@@ -22,7 +22,7 @@ const Login: React.FC = () => {
 
     try {
       const response = await api.login(credentials);
-      login(response.token, response.user);
+      login(response.user);
       navigate('/dashboard');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to login';

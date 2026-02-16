@@ -2,9 +2,12 @@ import React, { useState, useEffect, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import type { TennisMatch } from '../types';
+import { formatHumanDate, toDateInputValue } from '../utils/date';
 import styles from './Matches.module.css';
 
 type MatchFormat = 'bo3' | 'bo5';
+type MatchSort = 'date-desc' | 'date-asc' | 'opponent-asc' | 'opponent-desc';
+const MATCHES_PAGE_SIZE = 8;
 
 interface SetScoreInput {
   userGames: string;
@@ -115,20 +118,39 @@ const validateSet = (
   return null;
 };
 
-const formatSetForDisplay = (set: ParsedSetScore): React.ReactNode => {
-  const isTiebreak = typeof set.tbLoserPoints === 'number';
-  return (
-    <span className={styles.setScore}>
-      {set.userGames}-{set.oppGames}
-      {isTiebreak && <sub className={styles.tiebreakSub}>{set.tbLoserPoints}</sub>}
-    </span>
-  );
+const renderSetRows = (sets: ParsedSetScore[]): React.ReactNode => {
+  return sets.map((set, idx) => {
+    let tbDisplay = '-';
+    if (typeof set.tbLoserPoints === 'number') {
+      const winner = Math.max(7, set.tbLoserPoints + 2);
+      tbDisplay = `${winner}-${set.tbLoserPoints}`;
+    }
+
+    return (
+      <tr key={idx}>
+        <td>Set {idx + 1}</td>
+        <td>{set.userGames}</td>
+        <td>{set.oppGames}</td>
+        <td>{tbDisplay}</td>
+      </tr>
+    );
+  });
 };
 
 const Matches: React.FC = () => {
   const [matches, setMatches] = useState<TennisMatch[]>([]);
+  const [totalMatches, setTotalMatches] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(MATCHES_PAGE_SIZE);
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editingMatch, setEditingMatch] = useState<TennisMatch | null>(null);
+  const [sortBy, setSortBy] = useState<MatchSort>(() => {
+    const stored = localStorage.getItem('matchesSort');
+    if (stored === 'date-desc' || stored === 'date-asc' || stored === 'opponent-asc' || stored === 'opponent-desc') {
+      return stored;
+    }
+    return 'date-desc';
+  });
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [scoreError, setScoreError] = useState<string>('');
   const [formData, setFormData] = useState<MatchFormData>({
     opponentName: '',
@@ -146,13 +168,23 @@ const Matches: React.FC = () => {
 
   useEffect(() => {
     loadMatches();
-  }, []);
+  }, [sortBy, currentPage]);
+
+  useEffect(() => {
+    localStorage.setItem('matchesSort', sortBy);
+    setCurrentPage(1);
+  }, [sortBy]);
 
   const loadMatches = async (): Promise<void> => {
     setLoading(true);
     try {
-      const data = await api.getMatches();
-      setMatches(data);
+      const data = await api.getMatches({ page: currentPage, pageSize: MATCHES_PAGE_SIZE, sort: sortBy });
+      setMatches(data.items);
+      setTotalMatches(data.total);
+      setPageSize(data.pageSize);
+      if (currentPage > 1 && data.items.length === 0) {
+        setCurrentPage(Math.max(1, Math.ceil(data.total / data.pageSize)));
+      }
     } catch (err: unknown) {
       console.error('Failed to load matches:', err);
     } finally {
@@ -275,6 +307,7 @@ const Matches: React.FC = () => {
       setShowForm(false);
       setEditingMatch(null);
       resetForm();
+      setCurrentPage(1);
       loadMatches();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to save match';
@@ -326,7 +359,7 @@ const Matches: React.FC = () => {
     setFormData({
       opponentName: match.opponentName,
       opponentUtr: match.opponentUtr?.toString() || '',
-      matchDate: match.matchDate,
+      matchDate: toDateInputValue(match.matchDate),
       location: match.location || '',
       surface: match.surface || '',
       result: match.result || '',
@@ -381,6 +414,9 @@ const Matches: React.FC = () => {
     return <div className="loading-container">Loading...</div>;
   }
 
+  const totalPages = Math.max(1, Math.ceil(totalMatches / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+
   return (
     <div className={styles.container}>
       <div className={styles.backButton}>
@@ -388,9 +424,44 @@ const Matches: React.FC = () => {
       </div>
       <div className={styles.header}>
         <h2>Match History</h2>
-        <button onClick={toggleForm}>
-          {showForm ? 'Cancel' : 'Add Match'}
-        </button>
+        <div className={styles.headerActions}>
+          <select
+            className={styles.sortSelect}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as MatchSort)}
+            aria-label="Sort matches"
+          >
+            <option value="date-desc">Newest first</option>
+            <option value="date-asc">Oldest first</option>
+            <option value="opponent-asc">Opponent A-Z</option>
+            <option value="opponent-desc">Opponent Z-A</option>
+          </select>
+          <button onClick={toggleForm}>
+            {showForm ? 'Cancel' : 'Add Match'}
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.paginationRow}>
+        <span className={styles.paginationMeta}>
+          Page {safePage} of {totalPages}
+        </span>
+        <div className={styles.paginationControls}>
+          <button
+            type="button"
+            onClick={() => setCurrentPage(Math.max(1, safePage - 1))}
+            disabled={safePage === 1}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentPage(Math.min(totalPages, safePage + 1))}
+            disabled={safePage === totalPages}
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -568,20 +639,26 @@ const Matches: React.FC = () => {
                 </span>
               </div>
               <div className={styles.itemMeta}>
-                {match.matchDate} {match.location && `• ${match.location}`} {match.surface && `• ${match.surface}`}
+                {formatHumanDate(match.matchDate)} {match.location && `• ${match.location}`} {match.surface && `• ${match.surface}`}
               </div>
               <div className={styles.itemContent}>
                 {match.matchScore && (
-                  <p>
-                    <strong>Score:</strong>{' '}
-                    <span className={styles.scoreDisplay}>
-                      {parseMatchScoreString(match.matchScore).map((s, idx) => (
-                        <React.Fragment key={idx}>
-                          {formatSetForDisplay(s)}
-                        </React.Fragment>
-                      ))}
-                    </span>
-                  </p>
+                  <div className={styles.scoreTableWrapper}>
+                    <div className={styles.scoreTitle}>Score</div>
+                    <table className={styles.scoreTable}>
+                      <thead>
+                        <tr>
+                          <th>Set</th>
+                          <th>You</th>
+                          <th>Opp</th>
+                          <th>TB</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {renderSetRows(parseMatchScoreString(match.matchScore))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
                 {match.opponentUtr && <p><strong>Opponent UTR:</strong> {match.opponentUtr}</p>}
                 {match.notes && <p>{match.notes}</p>}

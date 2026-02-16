@@ -7,13 +7,52 @@ const router = Router();
 // Get all journal entries for user
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.userId;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const page = Math.max(1, Number.parseInt(req.query.page as string, 10) || 1);
+  const pageSizeRaw = Number.parseInt(req.query.pageSize as string, 10) || 6;
+  const pageSize = Math.min(50, Math.max(1, pageSizeRaw));
+  const sort = (req.query.sort as string) || 'date-desc';
+  const allowedSorts = new Set(['date-desc', 'date-asc', 'title-asc', 'title-desc']);
+  if (!allowedSorts.has(sort)) {
+    res.status(400).json({ error: 'Invalid sort parameter' });
+    return;
+  }
+
+  const orderBy = (() => {
+    switch (sort) {
+      case 'date-asc':
+        return [{ entryDate: 'asc' as const }, { id: 'asc' as const }];
+      case 'title-asc':
+        return [{ title: 'asc' as const }, { entryDate: 'desc' as const }];
+      case 'title-desc':
+        return [{ title: 'desc' as const }, { entryDate: 'desc' as const }];
+      case 'date-desc':
+      default:
+        return [{ entryDate: 'desc' as const }, { id: 'desc' as const }];
+    }
+  })();
   
   try {
-    const entries = await prisma.journalEntry.findMany({
-      where: { userId },
-      orderBy: { entryDate: 'desc' }
+    const [items, total] = await prisma.$transaction([
+      prisma.journalEntry.findMany({
+        where: { userId },
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.journalEntry.count({ where: { userId } })
+    ]);
+
+    res.json({
+      items,
+      total,
+      page,
+      pageSize,
     });
-    res.json(entries);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ error: errorMessage });

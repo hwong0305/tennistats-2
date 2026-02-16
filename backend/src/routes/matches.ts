@@ -7,13 +7,52 @@ const router = Router();
 // Get all matches for user
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.userId;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const page = Math.max(1, Number.parseInt(req.query.page as string, 10) || 1);
+  const pageSizeRaw = Number.parseInt(req.query.pageSize as string, 10) || 8;
+  const pageSize = Math.min(50, Math.max(1, pageSizeRaw));
+  const sort = (req.query.sort as string) || 'date-desc';
+  const allowedSorts = new Set(['date-desc', 'date-asc', 'opponent-asc', 'opponent-desc']);
+  if (!allowedSorts.has(sort)) {
+    res.status(400).json({ error: 'Invalid sort parameter' });
+    return;
+  }
+
+  const orderBy = (() => {
+    switch (sort) {
+      case 'date-asc':
+        return [{ matchDate: 'asc' as const }, { id: 'asc' as const }];
+      case 'opponent-asc':
+        return [{ opponentName: 'asc' as const }, { matchDate: 'desc' as const }];
+      case 'opponent-desc':
+        return [{ opponentName: 'desc' as const }, { matchDate: 'desc' as const }];
+      case 'date-desc':
+      default:
+        return [{ matchDate: 'desc' as const }, { id: 'desc' as const }];
+    }
+  })();
   
   try {
-    const matches = await prisma.tennisMatch.findMany({
-      where: { userId },
-      orderBy: { matchDate: 'desc' }
+    const [items, total] = await prisma.$transaction([
+      prisma.tennisMatch.findMany({
+        where: { userId },
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.tennisMatch.count({ where: { userId } })
+    ]);
+
+    res.json({
+      items,
+      total,
+      page,
+      pageSize,
     });
-    res.json(matches);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ error: errorMessage });

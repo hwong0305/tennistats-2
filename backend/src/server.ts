@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -11,8 +12,17 @@ import utrRoutes from './routes/utr.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: corsOrigins,
+  credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json());
 
 // Routes

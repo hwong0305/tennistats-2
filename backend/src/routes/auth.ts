@@ -1,17 +1,51 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../database.js';
-import { JWT_SECRET } from '../middleware/auth.js';
+import { authenticateToken, type AuthenticatedRequest, JWT_SECRET } from '../middleware/auth.js';
+
+const COOKIE_NAME = 'access_token';
+const TOKEN_EXPIRES_IN = '24h';
+const TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+const isValidEmail = (email: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isStrongPassword = (password: string): boolean => password.length >= 8;
+
+const setAuthCookie = (res: Response, token: string): void => {
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: TOKEN_MAX_AGE_MS,
+    path: '/',
+  });
+};
 
 const router = Router();
 
 // Register
 router.post('/register', async (req, res) => {
-  const { email, password, firstName, lastName } = req.body;
+  const { email, password, firstName, lastName } = req.body as {
+    email?: string;
+    password?: string;
+    firstName?: string;
+    lastName?: string;
+  };
 
   if (!email || !password) {
     res.status(400).json({ error: 'Email and password are required' });
+    return;
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+  if (!isValidEmail(normalizedEmail)) {
+    res.status(400).json({ error: 'Invalid email address' });
+    return;
+  }
+
+  if (!isStrongPassword(password)) {
+    res.status(400).json({ error: 'Password must be at least 8 characters' });
     return;
   }
 
@@ -20,18 +54,18 @@ router.post('/register', async (req, res) => {
     
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         firstName,
         lastName
       }
     });
 
-    const token = jwt.sign({ userId: user.id, email }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES_IN });
+    setAuthCookie(res, token);
     
     res.status(201).json({
       message: 'User created successfully',
-      token,
       user: {
         id: user.id,
         email: user.email,
@@ -51,16 +85,22 @@ router.post('/register', async (req, res) => {
 
 // Login
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body as { email?: string; password?: string };
 
   if (!email || !password) {
     res.status(400).json({ error: 'Email and password are required' });
     return;
   }
 
+  const normalizedEmail = normalizeEmail(email);
+  if (!isValidEmail(normalizedEmail)) {
+    res.status(400).json({ error: 'Invalid credentials' });
+    return;
+  }
+
   try {
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email: normalizedEmail }
     });
 
     if (!user) {
@@ -75,10 +115,10 @@ router.post('/login', async (req, res) => {
       return;
     }
 
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES_IN });
+    setAuthCookie(res, token);
 
     res.json({
-      token,
       user: {
         id: user.id,
         email: user.email,
@@ -90,6 +130,47 @@ router.post('/login', async (req, res) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ error: errorMessage });
   }
+});
+
+router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.userId;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+    });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+router.post('/logout', (_req, res) => {
+  res.clearCookie(COOKIE_NAME, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+  res.json({ message: 'Logged out' });
 });
 
 export default router;

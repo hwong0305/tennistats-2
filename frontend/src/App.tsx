@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Preferences from './pages/Preferences';
 import Journal from './pages/Journal';
 import Matches from './pages/Matches';
+import Landing from './pages/Landing';
 import './App.css';
 
 interface PrivateRouteProps {
@@ -14,11 +15,30 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) {
+    return null;
+  }
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
+const HomeRoute: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) {
+    return null;
+  }
+  return isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />;
+};
+
 function App(): React.ReactElement {
+  useEffect(() => {
+    const stored = localStorage.getItem('theme');
+    const initialTheme = stored === 'light' || stored === 'dark'
+      ? stored
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.dataset.theme = initialTheme;
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
@@ -59,7 +79,7 @@ function App(): React.ReactElement {
                   </PrivateRoute>
                 }
               />
-              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/" element={<HomeRoute />} />
             </Routes>
           </main>
         </div>
