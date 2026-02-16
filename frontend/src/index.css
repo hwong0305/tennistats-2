@@ -180,15 +180,111 @@ button:focus-visible {
   padding: 1rem;
 }
 
+.app-toolbar {
+  width: 100%;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-secondary);
+}
+
+.toolbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.toolbar-brand {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.toolbar-brand:hover {
+  text-decoration: none;
+  color: var(--color-text-primary);
+}
+
+.toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toolbar-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.toolbar-icon-button svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.toolbar-icon-button:hover {
+  border-color: var(--color-accent-blue);
+  background-color: var(--color-bg-tertiary);
+  transform: translateY(-1px);
+}
+
+.toolbar-link {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+}
+
+.toolbar-link:hover {
+  text-decoration: none;
+  color: var(--color-text-primary);
+  border-color: var(--color-accent-blue);
+  background: var(--color-bg-tertiary);
+}
+
+.toolbar-button {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+}
+
+.toolbar-button:hover {
+  background-color: var(--color-accent-red-bg);
+  border-color: var(--color-accent-red);
+}
+
 @media (min-width: 640px) {
   .main-content {
     padding: 1.5rem;
+  }
+
+  .toolbar-inner {
+    padding: 1rem 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .main-content {
     padding: 2rem;
+  }
+
+  .toolbar-inner {
+    padding: 1.25rem 2rem;
   }
 }
 
