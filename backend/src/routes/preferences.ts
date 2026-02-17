@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../database.js';
 import { authenticateToken, type AuthenticatedRequest } from '../middleware/auth.js';
+import { recordUtrHistoryIfChanged } from '../services/utrHistory.js';
 
 const router = Router();
 
@@ -50,22 +51,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
     });
 
     const parsedRating = typeof utrRating === 'number' ? utrRating : null;
-    if (parsedRating !== null) {
-      const latest = await prisma.utrHistory.findFirst({
-        where: { userId },
-        orderBy: { recordedAt: 'desc' },
-        select: { rating: true }
-      });
-
-      if (!latest || latest.rating !== parsedRating) {
-        await prisma.utrHistory.create({
-          data: {
-            userId,
-            rating: parsedRating,
-          }
-        });
-      }
-    }
+    await recordUtrHistoryIfChanged(prisma, userId, parsedRating);
 
     res.json({ 
       message: preferences ? 'Preferences updated successfully' : 'Preferences created successfully',
