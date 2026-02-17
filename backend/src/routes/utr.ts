@@ -35,6 +35,27 @@ router.get('/my-utr', authenticateToken, async (req: AuthenticatedRequest, res) 
   }
 });
 
+// Get UTR history for current user
+router.get('/history', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.userId;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const items = await prisma.utrHistory.findMany({
+      where: { userId },
+      orderBy: [{ recordedAt: 'asc' }, { id: 'asc' }],
+    });
+
+    res.json({ items });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
 // Update UTR info
 router.put('/my-utr', authenticateToken, async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.userId;
@@ -58,6 +79,24 @@ router.put('/my-utr', authenticateToken, async (req: AuthenticatedRequest, res) 
         utrProfileUrl
       }
     });
+
+    const parsedRating = typeof utrRating === 'number' ? utrRating : null;
+    if (parsedRating !== null) {
+      const latest = await prisma.utrHistory.findFirst({
+        where: { userId },
+        orderBy: { recordedAt: 'desc' },
+        select: { rating: true }
+      });
+
+      if (!latest || latest.rating !== parsedRating) {
+        await prisma.utrHistory.create({
+          data: {
+            userId,
+            rating: parsedRating,
+          }
+        });
+      }
+    }
 
     res.json({ 
       message: 'UTR information updated successfully',

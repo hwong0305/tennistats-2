@@ -42,6 +42,13 @@ export interface TennisMatch {
   updatedAt: string;
 }
 
+export interface UtrHistory {
+  id: number;
+  userId: number;
+  rating: number;
+  recordedAt: string;
+}
+
 export interface LoginCredentials {
   email: string;
   password: string;

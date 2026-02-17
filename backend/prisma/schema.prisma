@@ -16,6 +16,7 @@ model User {
   createdAt   DateTime            @default(now()) @map("created_at")
   updatedAt   DateTime            @updatedAt @map("updated_at")
   preferences UserPreferences?
+  utrHistory  UtrHistory[]
   journalEntries JournalEntry[]
   matches     TennisMatch[]
 
@@ -66,4 +67,15 @@ model TennisMatch {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("tennis_matches")
+}
+
+model UtrHistory {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  rating     Float    @map("rating")
+  recordedAt DateTime @default(now()) @map("recorded_at") @db.Date
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("utr_history")
+  @@index([userId, recordedAt])
 }

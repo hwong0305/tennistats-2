@@ -49,6 +49,24 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
       }
     });
 
+    const parsedRating = typeof utrRating === 'number' ? utrRating : null;
+    if (parsedRating !== null) {
+      const latest = await prisma.utrHistory.findFirst({
+        where: { userId },
+        orderBy: { recordedAt: 'desc' },
+        select: { rating: true }
+      });
+
+      if (!latest || latest.rating !== parsedRating) {
+        await prisma.utrHistory.create({
+          data: {
+            userId,
+            rating: parsedRating,
+          }
+        });
+      }
+    }
+
     res.json({ 
       message: preferences ? 'Preferences updated successfully' : 'Preferences created successfully',
       preferences 

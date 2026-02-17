@@ -16,7 +16,6 @@ const Preferences: React.FC = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
-
   useEffect(() => {
     loadPreferences();
   }, []);
@@ -139,6 +138,7 @@ const Preferences: React.FC = () => {
           {saving ? 'Saving...' : 'Save Preferences'}
         </button>
       </form>
+
     </div>
   );
 };

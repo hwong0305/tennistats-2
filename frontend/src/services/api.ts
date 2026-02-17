@@ -6,7 +6,8 @@ import type {
   LoginCredentials, 
   RegisterData,
   ApiError,
-  PagedResponse
+  PagedResponse,
+  UtrHistory
 } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -164,6 +165,10 @@ class ApiService {
       method: 'PUT',
       body: JSON.stringify(utrData),
     });
+  }
+
+  getUtrHistory(): Promise<{ items: UtrHistory[] }> {
+    return this.request<{ items: UtrHistory[] }>('/utr/history');
   }
 }
 

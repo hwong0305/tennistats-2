@@ -148,6 +148,109 @@
   }
 }
 
+.historySection {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.historyHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.historyHeader h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--color-text-primary);
+}
+
+.historyMeta {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.historyEmpty {
+  padding: 1rem;
+  background: var(--color-bg-primary);
+  border-radius: 0.75rem;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.chartCard {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.12), rgba(37, 99, 235, 0.02));
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  position: relative;
+}
+
+.chart {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+.chartArea {
+  fill: rgba(37, 99, 235, 0.18);
+}
+
+.chartLine {
+  fill: none;
+  stroke: rgba(37, 99, 235, 0.9);
+  stroke-width: 3;
+}
+
+.chartDot {
+  fill: var(--color-bg-primary);
+  stroke: rgba(37, 99, 235, 0.9);
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.chartTooltip {
+  position: absolute;
+  transform: translate(-50%, -120%);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  text-align: center;
+  min-width: 140px;
+  z-index: 1;
+}
+
+.tooltipValue {
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+}
+
+.tooltipDate {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.chartFooter {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.chartRange {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
 .navGrid {
   display: grid;
   grid-template-columns: 1fr;

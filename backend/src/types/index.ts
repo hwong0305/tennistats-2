@@ -45,6 +45,13 @@ export interface TennisMatch {
   updatedAt: string;
 }
 
+export interface UtrHistory {
+  id: number;
+  userId: number;
+  rating: number;
+  recordedAt: string;
+}
+
 export interface JWTPayload {
   userId: number;
   email: string;
