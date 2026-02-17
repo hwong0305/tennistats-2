@@ -5,6 +5,7 @@ A full-stack tennis tracking application built with TypeScript, Vite, and Expres
 ## Features
 
 - **User Authentication**: Secure login and registration with JWT tokens
+- **Coach Access**: Students can invite coaches, and coaches can view/comment on profiles, journals, and matches
 - **Tennis Preferences**: Track primary hand, play style, and backhand type
 - **UTR Integration**: View and manage your Universal Tennis Rating
 - **Journal Entries**: Record training notes and reflections
@@ -31,12 +32,13 @@ A full-stack tennis tracking application built with TypeScript, Vite, and Expres
 tennis-tracker/
 ├── backend/
 │   ├── src/
-│   │   ├── database.ts          # SQLite database setup
+│   │   ├── database.ts          # PostgreSQL database setup
 │   │   ├── server.ts            # Express server
 │   │   ├── middleware/
 │   │   │   └── auth.ts          # JWT authentication
 │   │   ├── routes/
 │   │   │   ├── auth.ts          # Authentication routes
+│   │   │   ├── coach.ts         # Coach access routes
 │   │   │   ├── preferences.ts   # Preferences routes
 │   │   │   ├── journal.ts       # Journal routes
 │   │   │   ├── matches.ts       # Match routes
@@ -54,6 +56,9 @@ tennis-tracker/
 │   │   │   ├── Login.tsx
 │   │   │   ├── Register.tsx
 │   │   │   ├── Dashboard.tsx
+│   │   │   ├── CoachAccess.tsx
+│   │   │   ├── CoachDashboard.tsx
+│   │   │   ├── CoachStudent.tsx
 │   │   │   ├── Preferences.tsx
 │   │   │   ├── Journal.tsx
 │   │   │   └── Matches.tsx
@@ -118,6 +123,20 @@ bun run build
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login user
 
+### Coach Access
+- `POST /api/coach/invites` - Student invites a coach by email
+- `GET /api/coach/invites` - Student invite list
+- `GET /api/coach/invites/pending` - Coach pending invites
+- `POST /api/coach/invites/:id/accept` - Coach accepts invite
+- `POST /api/coach/invites/:id/decline` - Coach declines invite
+- `GET /api/coach/students` - Coach list of accepted students
+- `GET /api/coach/students/:studentId/profile` - Coach view student profile/preferences/comments
+- `POST /api/coach/students/:studentId/profile/comments` - Coach adds profile comment
+- `GET /api/coach/students/:studentId/journals` - Coach view journal entries
+- `POST /api/coach/students/:studentId/journals/:id/comments` - Coach adds journal comment
+- `GET /api/coach/students/:studentId/matches` - Coach view matches
+- `POST /api/coach/students/:studentId/matches/:id/comments` - Coach adds match comment
+
 ### Preferences
 - `GET /api/preferences` - Get user preferences
 - `POST /api/preferences` - Create/update preferences
@@ -137,6 +156,20 @@ bun run build
 ### UTR
 - `GET /api/utr/my-utr` - Get user's UTR info
 - `PUT /api/utr/my-utr` - Update UTR info
+
+## Coach Workflow
+
+### Student
+1. Register as a student.
+2. Open the Coach Access page from the dashboard.
+3. Invite a coach by email.
+4. Once accepted, the coach can view your profile, journals, and matches.
+
+### Coach
+1. Register as a coach.
+2. Open the Coach Dashboard after logging in.
+3. Accept or decline pending invites.
+4. Open a student profile to review and leave comments.
 
 ## TypeScript
 
