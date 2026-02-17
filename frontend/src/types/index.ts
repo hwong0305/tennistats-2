@@ -1,8 +1,11 @@
+export type UserRole = 'student' | 'coach';
+
 export interface User {
   id: number;
   email: string;
   firstName: string;
   lastName: string;
+  role: UserRole;
 }
 
 export interface UserPreferences {
@@ -23,6 +26,7 @@ export interface JournalEntry {
   entryDate: string;
   createdAt: string;
   updatedAt: string;
+  comments?: JournalComment[];
 }
 
 export interface TennisMatch {
@@ -40,6 +44,7 @@ export interface TennisMatch {
   notes: string;
   createdAt: string;
   updatedAt: string;
+  comments?: MatchComment[];
 }
 
 export interface UtrHistory {
@@ -57,11 +62,60 @@ export interface LoginCredentials {
 export interface RegisterData extends LoginCredentials {
   firstName: string;
   lastName: string;
+  role?: UserRole;
 }
 
 export interface AuthResponse {
   user: User;
   message?: string;
+}
+
+export interface CoachInvite {
+  id: number;
+  studentId: number;
+  coachId: number | null;
+  coachEmail: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+  updatedAt: string;
+  coach?: User;
+  student?: User;
+}
+
+export interface CoachStudent {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface ProfileComment {
+  id: number;
+  studentId: number;
+  coachId: number;
+  content: string;
+  createdAt: string;
+  coach?: User;
+}
+
+export interface JournalComment {
+  id: number;
+  journalEntryId: number;
+  studentId: number;
+  coachId: number;
+  content: string;
+  createdAt: string;
+  coach?: User;
+}
+
+export interface MatchComment {
+  id: number;
+  matchId: number;
+  studentId: number;
+  coachId: number;
+  content: string;
+  createdAt: string;
+  coach?: User;
 }
 
 export interface ApiError {

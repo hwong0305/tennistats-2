@@ -318,6 +318,18 @@
   color: var(--color-accent-red);
 }
 
+.navCardPurple {
+  border-color: var(--color-accent-purple);
+}
+
+.navCardPurple:hover {
+  background-color: rgba(124, 58, 237, 0.12);
+}
+
+.navCardPurple h3 {
+  color: var(--color-accent-purple);
+}
+
 .navCard h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.25rem;

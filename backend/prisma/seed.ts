@@ -10,7 +10,22 @@ if (!connectionString) {
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
-const seedUsers = [
+const seedCoaches = [
+  {
+    email: 'coach.riley@example.com',
+    password: 'password123',
+    firstName: 'Riley',
+    lastName: 'Morgan',
+  },
+  {
+    email: 'coach.sofia@example.com',
+    password: 'password123',
+    firstName: 'Sofia',
+    lastName: 'Lopez',
+  }
+];
+
+const seedStudents = [
   {
     email: 'ava.player@example.com',
     password: 'password123',
@@ -109,6 +124,10 @@ const seedUsers = [
 ];
 
 const resetUserData = async (userId: number): Promise<void> => {
+  await prisma.profileComment.deleteMany({ where: { studentId: userId } });
+  await prisma.matchComment.deleteMany({ where: { studentId: userId } });
+  await prisma.journalComment.deleteMany({ where: { studentId: userId } });
+  await prisma.coachInvite.deleteMany({ where: { studentId: userId } });
   await prisma.utrHistory.deleteMany({ where: { userId } });
   await prisma.journalEntry.deleteMany({ where: { userId } });
   await prisma.tennisMatch.deleteMany({ where: { userId } });
@@ -116,7 +135,30 @@ const resetUserData = async (userId: number): Promise<void> => {
 };
 
 const main = async (): Promise<void> => {
-  for (const seedUser of seedUsers) {
+  const coachMap = new Map<string, { id: number; email: string }>();
+  for (const seedCoach of seedCoaches) {
+    const passwordHash = await bcrypt.hash(seedCoach.password, 10);
+    const coach = await prisma.user.upsert({
+      where: { email: seedCoach.email },
+      update: {
+        firstName: seedCoach.firstName,
+        lastName: seedCoach.lastName,
+        password: passwordHash,
+        role: 'coach',
+      },
+      create: {
+        email: seedCoach.email,
+        password: passwordHash,
+        firstName: seedCoach.firstName,
+        lastName: seedCoach.lastName,
+        role: 'coach',
+      },
+    });
+    coachMap.set(seedCoach.email, { id: coach.id, email: coach.email });
+  }
+
+  const studentMap = new Map<string, { id: number; email: string }>();
+  for (const seedUser of seedStudents) {
     const passwordHash = await bcrypt.hash(seedUser.password, 10);
     const user = await prisma.user.upsert({
       where: { email: seedUser.email },
@@ -124,14 +166,18 @@ const main = async (): Promise<void> => {
         firstName: seedUser.firstName,
         lastName: seedUser.lastName,
         password: passwordHash,
+        role: 'student',
       },
       create: {
         email: seedUser.email,
         password: passwordHash,
         firstName: seedUser.firstName,
         lastName: seedUser.lastName,
+        role: 'student',
       },
     });
+
+    studentMap.set(seedUser.email, { id: user.id, email: user.email });
 
     await resetUserData(user.id);
 
@@ -178,6 +224,112 @@ const main = async (): Promise<void> => {
         notes: match.notes,
       }))
     });
+  }
+
+  const coachIds = Array.from(coachMap.values()).map(coach => coach.id);
+  const studentIds = Array.from(studentMap.values()).map(student => student.id);
+  if (coachIds.length > 0 || studentIds.length > 0) {
+    await prisma.profileComment.deleteMany({
+      where: {
+        OR: [
+          { studentId: { in: studentIds } },
+          { coachId: { in: coachIds } },
+        ],
+      },
+    });
+    await prisma.journalComment.deleteMany({
+      where: {
+        OR: [
+          { studentId: { in: studentIds } },
+          { coachId: { in: coachIds } },
+        ],
+      },
+    });
+    await prisma.matchComment.deleteMany({
+      where: {
+        OR: [
+          { studentId: { in: studentIds } },
+          { coachId: { in: coachIds } },
+        ],
+      },
+    });
+    await prisma.coachInvite.deleteMany({
+      where: {
+        OR: [
+          { studentId: { in: studentIds } },
+          { coachId: { in: coachIds } },
+        ],
+      },
+    });
+  }
+
+  const ava = studentMap.get('ava.player@example.com');
+  const maria = studentMap.get('maria.kim@example.com');
+  const coachRiley = coachMap.get('coach.riley@example.com');
+  const coachSofia = coachMap.get('coach.sofia@example.com');
+
+  if (ava && coachRiley) {
+    await prisma.coachInvite.create({
+      data: {
+        studentId: ava.id,
+        coachId: coachRiley.id,
+        coachEmail: coachRiley.email,
+        status: 'accepted',
+      },
+    });
+  }
+
+  if (maria && coachSofia) {
+    await prisma.coachInvite.create({
+      data: {
+        studentId: maria.id,
+        coachId: coachSofia.id,
+        coachEmail: coachSofia.email,
+        status: 'pending',
+      },
+    });
+  }
+
+  if (ava && coachRiley) {
+    await prisma.profileComment.create({
+      data: {
+        studentId: ava.id,
+        coachId: coachRiley.id,
+        content: 'Strong baseline game. Let’s set a weekly serve goal and track first-serve percentage.',
+      },
+    });
+
+    const journalEntries = await prisma.journalEntry.findMany({
+      where: { userId: ava.id },
+      orderBy: [{ entryDate: 'desc' }, { id: 'desc' }],
+      take: 1,
+    });
+    if (journalEntries[0]) {
+      await prisma.journalComment.create({
+        data: {
+          journalEntryId: journalEntries[0].id,
+          studentId: ava.id,
+          coachId: coachRiley.id,
+          content: 'Great focus on serve variety. Try adding a target for body serves.',
+        },
+      });
+    }
+
+    const matches = await prisma.tennisMatch.findMany({
+      where: { userId: ava.id },
+      orderBy: [{ matchDate: 'desc' }, { id: 'desc' }],
+      take: 1,
+    });
+    if (matches[0]) {
+      await prisma.matchComment.create({
+        data: {
+          matchId: matches[0].id,
+          studentId: ava.id,
+          coachId: coachRiley.id,
+          content: 'Good win. Next time, look for earlier forehand opportunities on short balls.',
+        },
+      });
+    }
   }
 };
 

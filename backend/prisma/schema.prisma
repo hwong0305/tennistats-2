@@ -7,20 +7,56 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  student
+  coach
+}
+
+enum InviteStatus {
+  pending
+  accepted
+  declined
+}
+
 model User {
   id          Int                 @id @default(autoincrement())
   email       String              @unique
   password    String
   firstName   String?             @map("first_name")
   lastName    String?             @map("last_name")
+  role        UserRole            @default(student)
   createdAt   DateTime            @default(now()) @map("created_at")
   updatedAt   DateTime            @updatedAt @map("updated_at")
   preferences UserPreferences?
   utrHistory  UtrHistory[]
   journalEntries JournalEntry[]
   matches     TennisMatch[]
+  invitesSent CoachInvite[]       @relation("CoachInvitesSent")
+  invitesReceived CoachInvite[]   @relation("CoachInvitesReceived")
+  journalCommentsAuthored JournalComment[] @relation("CoachJournalComments")
+  matchCommentsAuthored MatchComment[] @relation("CoachMatchComments")
+  profileCommentsAuthored ProfileComment[] @relation("CoachProfileComments")
+  journalCommentsReceived JournalComment[] @relation("StudentJournalComments")
+  matchCommentsReceived MatchComment[] @relation("StudentMatchComments")
+  profileCommentsReceived ProfileComment[] @relation("StudentProfileComments")
 
   @@map("users")
+}
+
+model CoachInvite {
+  id         Int          @id @default(autoincrement())
+  studentId  Int          @map("student_id")
+  coachId    Int?         @map("coach_id")
+  coachEmail String       @map("coach_email")
+  status     InviteStatus @default(pending)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  student    User         @relation("CoachInvitesSent", fields: [studentId], references: [id], onDelete: Cascade)
+  coach      User?        @relation("CoachInvitesReceived", fields: [coachId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, coachEmail])
+  @@index([coachEmail])
+  @@map("coach_invites")
 }
 
 model UserPreferences {
@@ -45,8 +81,25 @@ model JournalEntry {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments  JournalComment[]
 
   @@map("journal_entries")
+}
+
+model JournalComment {
+  id             Int          @id @default(autoincrement())
+  journalEntryId Int          @map("journal_entry_id")
+  studentId      Int          @map("student_id")
+  coachId        Int          @map("coach_id")
+  content        String
+  createdAt      DateTime     @default(now()) @map("created_at")
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  student        User         @relation("StudentJournalComments", fields: [studentId], references: [id], onDelete: Cascade)
+  coach          User         @relation("CoachJournalComments", fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@index([journalEntryId])
+  @@index([studentId])
+  @@map("journal_comments")
 }
 
 model TennisMatch {
@@ -65,8 +118,25 @@ model TennisMatch {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments          MatchComment[]
 
   @@map("tennis_matches")
+}
+
+model MatchComment {
+  id        Int        @id @default(autoincrement())
+  matchId   Int        @map("match_id")
+  studentId Int        @map("student_id")
+  coachId   Int        @map("coach_id")
+  content   String
+  createdAt DateTime   @default(now()) @map("created_at")
+  match     TennisMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  student   User       @relation("StudentMatchComments", fields: [studentId], references: [id], onDelete: Cascade)
+  coach     User       @relation("CoachMatchComments", fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@index([studentId])
+  @@map("match_comments")
 }
 
 model UtrHistory {
@@ -78,4 +148,17 @@ model UtrHistory {
 
   @@map("utr_history")
   @@index([userId, recordedAt])
+}
+
+model ProfileComment {
+  id        Int      @id @default(autoincrement())
+  studentId Int      @map("student_id")
+  coachId   Int      @map("coach_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  student   User     @relation("StudentProfileComments", fields: [studentId], references: [id], onDelete: Cascade)
+  coach     User     @relation("CoachProfileComments", fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@map("profile_comments")
 }

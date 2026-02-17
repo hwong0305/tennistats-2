@@ -10,7 +10,8 @@ const Register: React.FC = () => {
     email: '',
     password: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
+    role: 'student'
   });
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -34,7 +35,7 @@ const Register: React.FC = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -63,6 +64,18 @@ const Register: React.FC = () => {
             onChange={handleChange}
             className={styles.input}
           />
+        </div>
+        <div className={styles.formGroup}>
+          <label>Account Type:</label>
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className={styles.input}
+          >
+            <option value="student">Student</option>
+            <option value="coach">Coach</option>
+          </select>
         </div>
         <div className={styles.formGroup}>
           <label>Email:</label>

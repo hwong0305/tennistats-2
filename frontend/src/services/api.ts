@@ -7,7 +7,12 @@ import type {
   RegisterData,
   ApiError,
   PagedResponse,
-  UtrHistory
+  UtrHistory,
+  CoachInvite,
+  CoachStudent,
+  ProfileComment,
+  JournalComment,
+  MatchComment
 } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -169,6 +174,86 @@ class ApiService {
 
   getUtrHistory(): Promise<{ items: UtrHistory[] }> {
     return this.request<{ items: UtrHistory[] }>('/utr/history');
+  }
+
+  // Coach invites
+  getCoachInvites(): Promise<{ invites: CoachInvite[] }> {
+    return this.request<{ invites: CoachInvite[] }>('/coach/invites');
+  }
+
+  createCoachInvite(coachEmail: string): Promise<{ invite: CoachInvite }> {
+    return this.request<{ invite: CoachInvite }>('/coach/invites', {
+      method: 'POST',
+      body: JSON.stringify({ coachEmail }),
+    });
+  }
+
+  getCoachPendingInvites(): Promise<{ invites: CoachInvite[] }> {
+    return this.request<{ invites: CoachInvite[] }>('/coach/invites/pending');
+  }
+
+  acceptCoachInvite(id: number): Promise<{ invite: CoachInvite }> {
+    return this.request<{ invite: CoachInvite }>(`/coach/invites/${id}/accept`, {
+      method: 'POST',
+    });
+  }
+
+  declineCoachInvite(id: number): Promise<{ invite: CoachInvite }> {
+    return this.request<{ invite: CoachInvite }>(`/coach/invites/${id}/decline`, {
+      method: 'POST',
+    });
+  }
+
+  // Coach view
+  getCoachStudents(): Promise<{ students: CoachStudent[] }> {
+    return this.request<{ students: CoachStudent[] }>('/coach/students');
+  }
+
+  getCoachStudentProfile(studentId: number): Promise<{ student: CoachStudent; preferences: UserPreferences | null; comments: ProfileComment[] }> {
+    return this.request<{ student: CoachStudent; preferences: UserPreferences | null; comments: ProfileComment[] }>(`/coach/students/${studentId}/profile`);
+  }
+
+  async getCoachStudentJournals(studentId: number, params?: { page?: number; pageSize?: number; sort?: string }): Promise<PagedResponse<JournalEntry>> {
+    const search = new URLSearchParams();
+    const page = params?.page ?? 1;
+    const pageSize = params?.pageSize ?? 6;
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.pageSize) search.set('pageSize', String(params.pageSize));
+    if (params?.sort) search.set('sort', params.sort);
+    const query = search.toString();
+    return this.request<PagedResponse<JournalEntry>>(`/coach/students/${studentId}/journals${query ? `?${query}` : ''}`);
+  }
+
+  async getCoachStudentMatches(studentId: number, params?: { page?: number; pageSize?: number; sort?: string }): Promise<PagedResponse<TennisMatch>> {
+    const search = new URLSearchParams();
+    const page = params?.page ?? 1;
+    const pageSize = params?.pageSize ?? 8;
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.pageSize) search.set('pageSize', String(params.pageSize));
+    if (params?.sort) search.set('sort', params.sort);
+    const query = search.toString();
+    return this.request<PagedResponse<TennisMatch>>(`/coach/students/${studentId}/matches${query ? `?${query}` : ''}`);
+  }
+
+  createCoachProfileComment(studentId: number, content: string): Promise<{ comment: ProfileComment }> {
+    return this.request<{ comment: ProfileComment }>(`/coach/students/${studentId}/profile/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  createCoachJournalComment(studentId: number, journalId: number, content: string): Promise<{ comment: JournalComment }> {
+    return this.request<{ comment: JournalComment }>(`/coach/students/${studentId}/journals/${journalId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  createCoachMatchComment(studentId: number, matchId: number, content: string): Promise<{ comment: MatchComment }> {
+    return this.request<{ comment: MatchComment }>(`/coach/students/${studentId}/matches/${matchId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
   }
 }
 

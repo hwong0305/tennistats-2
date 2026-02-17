@@ -4,6 +4,7 @@ export interface User {
   password: string;
   firstName: string | null;
   lastName: string | null;
+  role: 'student' | 'coach';
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +56,7 @@ export interface UtrHistory {
 export interface JWTPayload {
   userId: number;
   email: string;
+  role: 'student' | 'coach';
 }
 
 export interface AuthRequest extends Request {

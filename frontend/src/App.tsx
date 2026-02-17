@@ -8,6 +8,9 @@ import Preferences from './pages/Preferences';
 import Journal from './pages/Journal';
 import Matches from './pages/Matches';
 import Landing from './pages/Landing';
+import CoachAccess from './pages/CoachAccess';
+import CoachDashboard from './pages/CoachDashboard';
+import CoachStudent from './pages/CoachStudent';
 import './App.css';
 
 interface PrivateRouteProps {
@@ -28,6 +31,20 @@ const HomeRoute: React.FC = () => {
     return null;
   }
   return isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />;
+};
+
+const DashboardRoute: React.FC = () => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  if (isLoading) {
+    return null;
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  if (user?.role === 'coach') {
+    return <CoachDashboard />;
+  }
+  return <Dashboard />;
 };
 
 const getInitialTheme = (): 'light' | 'dark' => {
@@ -112,7 +129,7 @@ function App(): React.ReactElement {
                 path="/dashboard"
                 element={
                   <PrivateRoute>
-                    <Dashboard />
+                    <DashboardRoute />
                   </PrivateRoute>
                 }
               />
@@ -137,6 +154,22 @@ function App(): React.ReactElement {
                 element={
                   <PrivateRoute>
                     <Matches />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/coach-access"
+                element={
+                  <PrivateRoute>
+                    <CoachAccess />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/coach/students/:studentId"
+                element={
+                  <PrivateRoute>
+                    <CoachStudent />
                   </PrivateRoute>
                 }
               />

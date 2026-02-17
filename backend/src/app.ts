@@ -10,6 +10,7 @@ import preferencesRoutes from './routes/preferences.js';
 import journalRoutes from './routes/journal.js';
 import matchesRoutes from './routes/matches.js';
 import utrRoutes from './routes/utr.js';
+import coachRoutes from './routes/coach.js';
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/preferences', preferencesRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/matches', matchesRoutes);
 app.use('/api/utr', utrRoutes);
+app.use('/api/coach', coachRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', message: 'Tennis Tracker API is running' });

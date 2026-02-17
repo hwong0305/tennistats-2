@@ -234,6 +234,10 @@ const Dashboard: React.FC = () => {
           <h3>Matches</h3>
           <p>Record and review your match history</p>
         </Link>
+        <Link to="/coach-access" className={`${styles.navCard} ${styles.navCardPurple}`}>
+          <h3>Coach Access</h3>
+          <p>Invite a coach and manage viewing access</p>
+        </Link>
       </div>
     </div>
   );

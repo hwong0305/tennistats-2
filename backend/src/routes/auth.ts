@@ -26,11 +26,12 @@ const router = Router();
 
 // Register
 router.post('/register', async (req, res) => {
-  const { email, password, firstName, lastName } = req.body as {
+  const { email, password, firstName, lastName, role } = req.body as {
     email?: string;
     password?: string;
     firstName?: string;
     lastName?: string;
+    role?: string;
   };
 
   if (!email || !password) {
@@ -49,6 +50,13 @@ router.post('/register', async (req, res) => {
     return;
   }
 
+  const normalizedRole = role?.toLowerCase();
+  const allowedRoles = new Set(['student', 'coach']);
+  if (normalizedRole && !allowedRoles.has(normalizedRole)) {
+    res.status(400).json({ error: 'Invalid role' });
+    return;
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     
@@ -57,11 +65,24 @@ router.post('/register', async (req, res) => {
         email: normalizedEmail,
         password: hashedPassword,
         firstName,
-        lastName
+        lastName,
+        role: normalizedRole === 'coach' ? 'coach' : 'student'
       }
     });
 
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES_IN });
+    if (user.role === 'coach') {
+      await prisma.coachInvite.updateMany({
+        where: {
+          coachEmail: user.email,
+          coachId: null,
+        },
+        data: {
+          coachId: user.id,
+        }
+      });
+    }
+
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES_IN });
     setAuthCookie(res, token);
     
     res.status(201).json({
@@ -70,7 +91,8 @@ router.post('/register', async (req, res) => {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        role: user.role
       }
     });
   } catch (error: unknown) {
@@ -115,7 +137,7 @@ router.post('/login', async (req, res) => {
       return;
     }
 
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES_IN });
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES_IN });
     setAuthCookie(res, token);
 
     res.json({
@@ -123,7 +145,8 @@ router.post('/login', async (req, res) => {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        role: user.role
       }
     });
   } catch (error: unknown) {
@@ -140,9 +163,9 @@ router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res) => {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
 
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -155,6 +178,7 @@ router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
     });
   } catch (error: unknown) {
