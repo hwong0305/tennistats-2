@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 import { describe, expect, it } from 'bun:test';
 import { recordUtrHistoryIfChanged } from '../src/services/utrHistory.js';
 

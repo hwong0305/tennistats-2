@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
 import jwt from 'jsonwebtoken';
 import type { AddressInfo } from 'net';
